@@ -70,4 +70,15 @@ def baum_welch(num_states, sequences, num_tokens):
             num = sum(e_vec[t][i][j] for t in range(len(seq) - 1))
             denominator = sum(gammas[t][i] for t in range(len(seq) - 1))
             A[i][j] = num / float(denominator)
+            
+    for i in range(num_states):
+        for v_k in range(num_tokens):
+            i_sum = 0
+            denominator = 0
+            for t in range(len(seq)):
+                if seq[t] == v_k:
+                    i_sum += gammas[t][i]
+                denominator += gammas[t][i]
+            val = i_sum / float(denominator)
+            O[v_k][i] = val
         
