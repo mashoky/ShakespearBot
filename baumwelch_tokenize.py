@@ -1,6 +1,8 @@
 import numpy as np
 
-file = open('C:/Users/Jagriti/Documents/CS155/project2data/shakespeare.txt', 'r')
+#file = open('C:/Users/Jagriti/Documents/CS155/project2data/shakespeare.txt', 'r')
+
+file = open('C:\Users\manasa\Documents\Caltech\CS 155\ShakespeareProject\shakespeare.txt')
 
 int_list = []
 punc_list = ['.', ',', ';', ':']
@@ -78,98 +80,106 @@ def baum_welch(num_states, sequences, num_tokens):
     O = np.random.uniform(0,1,(num_tokens, num_states))
     pi = np.random.uniform(0, num_tokens, (1, num_states))
     
-    order = np.random.permutation(len(sequences))
-    idx = 0
+    #order = np.random.permutation(len(sequences))
+    #idx = 0
    
-    num_iter = 100000
+    num_iter = 1
     
     for it in range(num_iter):
-        if idx == len(sequences):
-            order = np.random.permutation(len(sequences))
-            idx = 0
-        seq = sequences[idx]
-        idx += 1
-        # Forward procedure
-        alphas = []
-        prev_alpha = []
-        for j,w in enumerate(seq):
-            curr = []
-            for i in range(num_states):
-                if j == 0:
-                    val = pi[0][i]
-                else:
-                    val = 0
-                    for k in range(num_states):
-                        val += prev_alpha[k] * A[k][i]
-                curr.append(val * O[w][i])
-            alphas.append(curr)
-            prev_alpha = curr
+        #if idx == len(sequences):
+        #    order = np.random.permutation(len(sequences))
+        #    idx = 0
+        temp_a = np.zeros((num_states, num_states))
+        temp_o = np.zeros((num_tokens, num_states))
+        for seq in sequences:
+            # Forward procedure
+            alphas = []
+            prev_alpha = []
+            for j,w in enumerate(seq):
+                curr = []
+                for i in range(num_states):
+                    if j == 0:
+                        val = pi[0][i]
+                    else:
+                        val = 0
+                        for k in range(num_states):
+                            val += prev_alpha[k] * A[k][i]
+                    curr.append(val * O[w][i])
+                alphas.append(curr)
+                prev_alpha = curr
+            
+            # Backward Procedure
+            betas = []
+            nxt_beta = []
+            for j,w in enumerate(reversed(seq)):
+                curr = []
+                for i in range(num_states):
+                    #if j == len(seq) - 1:
+                    if j == 0:
+                        curr.append(1)
+                    else:
+                        val = 0
+                        for k in range(num_states):
+                            #val += nxt_beta[k] * A[i][k] * O[w][k]
+                            val += nxt_beta[0] * A[i][k] * O[w][k]
+                        curr.append(val)
+                betas.insert(0, curr)
+                nxt_beta = curr
         
-        # Backward Procedure
-        betas = []
-        nxt_beta = []
-        for j,w in enumerate(reversed(seq)):
-            curr = []
+            gammas = []  
+            # Calculate temporary variables
+            for t, word in enumerate(seq):
+                curr = []
+                for i in range(num_states): 
+                    num = alphas[t][i] * betas[t][i]       
+                    sum_val = sum(alphas[t][j] * betas[t][j] for j in range(num_states))
+                    curr.append(num / float(sum_val))
+                gammas.append(curr)
+                
+            e_vec = []
+            for t, word in enumerate(seq[:-1]):
+                e_mat = np.zeros((num_states,num_states))
+                for i in range(num_states): 
+                    for j in range(num_states):
+                        num = alphas[t][i] * A[i][j] * betas[t + 1][j]  * O[seq[t + 1]][j]
+                        #sum_val = sum(alphas[num_states - 1][k] for k in range(num_states))
+                        sum_val = sum(alphas[len(seq) - 1][k] for k in range(num_states))
+                        e_mat[i][j] = num / float(sum_val)
+                e_vec.append(e_mat)  
+                
+            # Update parameters
             for i in range(num_states):
-                #if j == len(seq) - 1:
-                if j == 0:
-                    curr.append(1)
-                else:
-                    val = 0
-                    for k in range(num_states):
-                        #val += nxt_beta[k] * A[i][k] * O[w][k]
-                        val += nxt_beta[0] * A[i][k] * O[w][k]
-                    curr.append(val)
-            betas.insert(0, curr)
-            nxt_beta = curr
-    
-        gammas = []  
-        # Calculate temporary variables
-        for t, word in enumerate(seq):
-            curr = []
-            for i in range(num_states): 
-                num = alphas[t][i] * betas[t][i]       
-                sum_val = sum(alphas[t][j] * betas[t][j] for j in range(num_states))
-                curr.append(num / float(sum_val))
-            gammas.append(curr)
-            
-        e_vec = []
-        for t, word in enumerate(seq[:-1]):
-            e_mat = np.zeros((num_states,num_states))
-            for i in range(num_states): 
+                pi[0][i] = gammas[1][i]
+                
+            # Update Transition Matrix
+            for i in range(num_states):
                 for j in range(num_states):
-                    num = alphas[t][i] * A[i][j] * betas[t + 1][j]  * O[seq[t + 1]][j]
-                    #sum_val = sum(alphas[num_states - 1][k] for k in range(num_states))
-                    sum_val = sum(alphas[len(seq) - 1][k] for k in range(num_states))
-                    e_mat[i][j] = num / float(sum_val)
-            e_vec.append(e_mat)  
-            
-        # Update parameters
-        for i in range(num_states):
-            pi[0][i] = gammas[1][i]
-            
-        # Update Transition Matrix
-        for i in range(num_states):
-            for j in range(num_states):
-                num = sum(e_vec[t][i][j] for t in range(len(seq) - 1))
-                denominator = sum(gammas[t][i] for t in range(len(seq) - 1))
-                A[i][j] = num / float(denominator)
+                    num = sum(e_vec[t][i][j] for t in range(len(seq) - 1))
+                    denominator = sum(gammas[t][i] for t in range(len(seq) - 1))
+                    temp_a[i][j] += num / float(denominator)
+                    
+            for i in range(num_states):
+                for v_k in range(num_tokens):
+                    i_sum = 0
+                    denominator = 0
+                    for t in range(len(seq)):
+                        if seq[t] == v_k:
+                            #print "hi"
+                            #print gammas[t][i]
+                            i_sum += gammas[t][i]
+                            #print i_sum
+                        denominator += gammas[t][i]
+                        #print i_sum
+                    val = i_sum / float(denominator)
+                    temp_o[v_k][i] += val
+                # print val
                 
         for i in range(num_states):
-            for v_k in range(num_tokens):
-                i_sum = 0
-                denominator = 0
-                for t in range(len(seq)):
-                    if seq[t] == v_k:
-                        #print "hi"
-                        #print gammas[t][i]
-                        i_sum += gammas[t][i]
-                        #print i_sum
-                    denominator += gammas[t][i]
-                    #print i_sum
-                val = i_sum / float(denominator)
-                O[v_k][i] = val
-            # print val
+            for j in range(num_states):
+                A[i][j] = temp_a[i][j] / float(len(sequences))
+        for v_k in range(num_states):
+            for i in range(num_tokens):
+                O[v_k][i] = temp_o[v_k][i] / float(len(sequences))
         
     #print O
             
