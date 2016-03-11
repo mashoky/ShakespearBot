@@ -1,4 +1,6 @@
 import numpy as np
+import finding_sequence
+from numpy import random
 
 #file = open('C:/Users/Jagriti/Documents/CS155/project2data/shakespeare.txt', 'r')
 
@@ -32,6 +34,7 @@ for line in file:
         words =words.split(' ')
         
         for i in words:
+            i = i.lower()
             contains_punc = False
             
             if any((c in punc_string) for c in i):
@@ -75,15 +78,14 @@ sequences = sequence_list
 num_tokens = len(word_num_dict.keys())
 
 
-def baum_welch(num_states, sequences, num_tokens):
+def baum_welch(num_states, sequences, num_tokens, pi):
     A = np.ones((num_states, num_states)) / num_states
     O = np.ones((num_tokens, num_states)) / num_states
-    pi = np.random.uniform(0, 1, (1, num_states))
     
     #order = np.random.permutation(len(sequences))
     #idx = 0
    
-    num_iter = 1
+    num_iter = 100
     prev_a_norm = 100000
     prev_o_norm = 100000
     print 'out'
@@ -102,6 +104,8 @@ def baum_welch(num_states, sequences, num_tokens):
             # Forward procedure
             alphas = []
             prev_alpha = []
+            # Calculate probability of seeing a particular emission and being
+            # in state i at position j
             for j,w in enumerate(seq):
                 curr = []
                 for i in range(num_states):
@@ -117,6 +121,8 @@ def baum_welch(num_states, sequences, num_tokens):
                 prev_alpha = curr
             
             # Backward Procedure
+            # Calculate probability of ending the partial sequence at a particular
+            # observation, given the starting state i at position j
             betas = []
             nxt_beta = []
             for j,w in enumerate(reversed(seq)):
@@ -139,6 +145,8 @@ def baum_welch(num_states, sequences, num_tokens):
         
             gammas = []  
             # Calculate temporary variables
+            # Probability of being in state i at position t given the observed
+            # sequence
             for t, word in enumerate(seq):
                 curr = []
                 for i in range(num_states): 
@@ -150,6 +158,8 @@ def baum_welch(num_states, sequences, num_tokens):
                 gammas.append(curr)
                 
             e_vec = []
+            # Calculate probability of being in state i and state j at positions
+            # t and t + 1 given the observed sequence
             for t, word in enumerate(seq[:-1]):
                 e_mat = np.zeros((num_states,num_states))
                 for i in range(num_states): 
@@ -199,11 +209,52 @@ def baum_welch(num_states, sequences, num_tokens):
                 O[v_k][i] = temp_o[v_k][i] / float(len(sequences))
         a_norm = np.linalg.norm(A)
         o_norm = np.linalg.norm(O)
-        if abs(a_norm - prev_a_norm) < 0.001 and abs(o_norm - prev_o_norm) < 0.001:
+        if abs(a_norm - prev_a_norm) < 0.1 and abs(o_norm - prev_o_norm) < 0.1:
             break
-    print A   
-    print O
-    print np.sum(A, axis=0)
-    print np.sum(O, axis=0)
-print num_tokens
-baum_welch(num_states, sequences,num_tokens)
+    #print A   
+    #print O
+    #print np.sum(A, axis=0)
+    #print np.sum(O, axis=0)
+    return (A, O)
+    
+def get_random(row):
+    rand_prob = np.random.uniform(0.0,1.0)
+
+    cumulative_prob = 0
+    for idx in range(len(row)):
+        cumulative_prob += row[idx]
+        if rand_prob <= cumulative_prob:
+            return idx
+    return np.argmax(row)
+
+def neseq(num_states, num_tokens, pi, A, O, len_seq):
+    seq = []
+    rand_init_state = get_random(pi[0])
+    #rand_init_state = 0
+    state = rand_init_state
+    # states by observations now
+    Ot = np.transpose(O)
+
+    # next state essentially chosen randomly, need to find a way 
+    # to take probability into account
+    while len(seq) < len_seq:
+        rand_obs = get_random(Ot[state])
+        #rand_obs = 0
+        seq.append(rand_obs)
+        next_state = get_random(A[state])
+        #next_state = 0
+        state = next_state
+        
+    return seq
+def get_line_from_seq(seq, tokens):
+    line = []
+    res = dict((v,k) for k,v in tokens.iteritems())
+    for w in seq:
+        line.append(res[w])
+    return line
+
+pi = np.random.uniform(0, 1, (1, num_states))
+(A, O) = baum_welch(num_states, sequences,num_tokens, pi)
+seq = neseq(num_states, num_tokens,pi, A, O,5)
+print seq
+print get_line_from_seq(seq, word_num_dict)
