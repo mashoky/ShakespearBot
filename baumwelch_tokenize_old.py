@@ -76,26 +76,22 @@ num_tokens = len(word_num_dict.keys())
 
 
 def baum_welch(num_states, sequences, num_tokens):
-    A = np.ones((num_states, num_states)) / num_states
-    O = np.ones((num_tokens, num_states)) / num_states
-    pi = np.random.uniform(0, 1, (1, num_states))
+    A = np.random.uniform(0,1,(num_states, num_states))
+    O = np.random.uniform(0,1,(num_tokens, num_states))
+    pi = np.random.uniform(0, num_tokens, (1, num_states))
     
     #order = np.random.permutation(len(sequences))
     #idx = 0
    
     num_iter = 1
-    prev_a_norm = 100000
-    prev_o_norm = 100000
+    
     for it in range(num_iter):
         #if idx == len(sequences):
         #    order = np.random.permutation(len(sequences))
         #    idx = 0
         temp_a = np.zeros((num_states, num_states))
         temp_o = np.zeros((num_tokens, num_states))
-        #seq_num = 0
         for seq in sequences:
-            #print seq_num
-            #seq_num += 1
             # Forward procedure
             alphas = []
             prev_alpha = []
@@ -109,7 +105,6 @@ def baum_welch(num_states, sequences, num_tokens):
                         for k in range(num_states):
                             val += prev_alpha[k] * A[k][i]
                     curr.append(val * O[w][i])
-                curr = [float(i)/sum(curr) for i in curr]
                 alphas.append(curr)
                 prev_alpha = curr
             
@@ -128,9 +123,6 @@ def baum_welch(num_states, sequences, num_tokens):
                             #val += nxt_beta[k] * A[i][k] * O[w][k]
                             val += nxt_beta[0] * A[i][k] * O[w][k]
                         curr.append(val)
-
-
-                curr = [float(i)/sum(curr) for i in curr]
                 betas.insert(0, curr)
                 nxt_beta = curr
         
@@ -165,10 +157,8 @@ def baum_welch(num_states, sequences, num_tokens):
                     num = sum(e_vec[t][i][j] for t in range(len(seq) - 1))
                     denominator = sum(gammas[t][i] for t in range(len(seq) - 1))
                     temp_a[i][j] += num / float(denominator)
-
+                    
             for i in range(num_states):
-                #print 'NEW Round'
-                #print i
                 for v_k in range(num_tokens):
                     i_sum = 0
                     denominator = 0
@@ -178,29 +168,19 @@ def baum_welch(num_states, sequences, num_tokens):
                             #print gammas[t][i]
                             i_sum += gammas[t][i]
                             #print i_sum
-                        #print i_sum
                         denominator += gammas[t][i]
                         #print i_sum
                     val = i_sum / float(denominator)
                     temp_o[v_k][i] += val
-                    #if val != 0:
-                        #print val
                 # print val
-        print 'here'      
+                
         for i in range(num_states):
             for j in range(num_states):
                 A[i][j] = temp_a[i][j] / float(len(sequences))
-        for v_k in range(num_tokens):
-            for i in range(num_states):
-                print temp_o[v_k][i] / float(len(sequences))
+        for v_k in range(num_states):
+            for i in range(num_tokens):
                 O[v_k][i] = temp_o[v_k][i] / float(len(sequences))
-        a_norm = np.linalg.norm(A)
-        o_norm = np.linalg.norm(O)
-        print a_norm
-        print o_norm
-        if abs(a_norm - prev_a_norm) == 0.1 and abs(o_norm - prev_o_norm) == 0.1:
-            break
-    print A   
-    print O
+        
+    #print O
             
-baum_welch(num_states, sequences,num_tokens)
+baum_welch(num_states, sequences, num_tokens)
