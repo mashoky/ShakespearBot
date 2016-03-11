@@ -199,7 +199,7 @@ def baum_welch(num_states, sequences, num_tokens):
                 O[v_k][i] = temp_o[v_k][i] / float(len(sequences))
         a_norm = np.linalg.norm(A)
         o_norm = np.linalg.norm(O)
-        if abs(a_norm - prev_a_norm) == 0.1 and abs(o_norm - prev_o_norm) == 0.1:
+        if abs(a_norm - prev_a_norm) < 0.001 and abs(o_norm - prev_o_norm) < 0.001:
             break
     print A   
     print O
