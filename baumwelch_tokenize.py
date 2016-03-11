@@ -2,7 +2,7 @@ import numpy as np
 
 #file = open('C:/Users/Jagriti/Documents/CS155/project2data/shakespeare.txt', 'r')
 
-file = open('C:\Users\manasa\Documents\Caltech\CS 155\ShakespeareProject\shakespeare.txt')
+file = open('C:\Users\manasa\Documents\Caltech\CS 155\ShakespeareProject\smallshakespear.txt')
 
 int_list = []
 punc_list = ['.', ',', ';', ':']
@@ -86,7 +86,10 @@ def baum_welch(num_states, sequences, num_tokens):
     num_iter = 1
     prev_a_norm = 100000
     prev_o_norm = 100000
+    print 'out'
     for it in range(num_iter):
+        print 'Iteration'
+        print it
         #if idx == len(sequences):
         #    order = np.random.permutation(len(sequences))
         #    idx = 0
@@ -142,6 +145,8 @@ def baum_welch(num_states, sequences, num_tokens):
                     num = alphas[t][i] * betas[t][i]       
                     sum_val = sum(alphas[t][j] * betas[t][j] for j in range(num_states))
                     curr.append(num / float(sum_val))
+                #print 'gamma_sum'
+                #print sum(curr)
                 gammas.append(curr)
                 
             e_vec = []
@@ -185,22 +190,20 @@ def baum_welch(num_states, sequences, num_tokens):
                     temp_o[v_k][i] += val
                     #if val != 0:
                         #print val
-                # print val
-        print 'here'      
+                # print val   
         for i in range(num_states):
             for j in range(num_states):
                 A[i][j] = temp_a[i][j] / float(len(sequences))
         for v_k in range(num_tokens):
             for i in range(num_states):
-                print temp_o[v_k][i] / float(len(sequences))
                 O[v_k][i] = temp_o[v_k][i] / float(len(sequences))
         a_norm = np.linalg.norm(A)
         o_norm = np.linalg.norm(O)
-        print a_norm
-        print o_norm
         if abs(a_norm - prev_a_norm) == 0.1 and abs(o_norm - prev_o_norm) == 0.1:
             break
     print A   
     print O
-            
+    print np.sum(A, axis=0)
+    print np.sum(O, axis=0)
+print num_tokens
 baum_welch(num_states, sequences,num_tokens)
