@@ -8,8 +8,8 @@ import nltk
 file = open('C:\Users\manasa\Documents\Caltech\CS 155\ShakespeareProject\smallshakespear.txt')
 
 int_list = []
-punc_list = ['.', ',', ';', ':']
-punc_string = '.,;:'
+punc_list = ['.', ',', ';', ':','?']
+punc_string = '.,;:?'
 english_vocab = set(w.lower() for w in nltk.corpus.words.words())
 
 # list of sequences, where each word is a number corrresponding to balue in dictionary
