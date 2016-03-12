@@ -89,7 +89,7 @@ vals = word_num_dict.values()
 vals.sort()
 #print word_num_dict['.']
 
-num_states = 10
+num_states = 50
 sequences = sequence_list
 num_tokens = len(word_num_dict.keys())
 
@@ -104,7 +104,7 @@ def baum_welch(num_states, sequences, num_tokens, pi):
     for j in range(num_states):
         O [:,j] = O[:,j] / np.sum(O, axis = 0)[j]
   
-    num_iter = 1
+    num_iter = 100
     prev_a_norm = 100000
     prev_o_norm = 100000
     print 'out'
@@ -232,7 +232,7 @@ def baum_welch(num_states, sequences, num_tokens, pi):
                 O[v_k][i] = temp_o[v_k][i] / float(len(sequences))
         a_norm = np.linalg.norm(A)
         o_norm = np.linalg.norm(O)
-        if abs(a_norm - prev_a_norm) < 0.1 and abs(o_norm - prev_o_norm) < 0.1:
+        if abs(a_norm - prev_a_norm) < 0.01 and abs(o_norm - prev_o_norm) < 0.01:
             break
         prev_a_norm = a_norm
         prev_o_norm = o_norm
@@ -257,7 +257,7 @@ def get_syllable_info(tokens):
     for k in tokens.keys():
         s = len(h_en.syllables(unicode(k)))
         # Sometimes pyhyphen treats 1 syllable words as having 0 syllables
-        if s == 0 and k not in punc_list:
+        if s == 0:
             s = 1
         syllables[s].append(k)
     return syllables
@@ -265,44 +265,44 @@ def get_syllable_info(tokens):
 def neseq(num_states, num_tokens, pi, A, O, tokens, total_len):
     res = dict((v,k) for k,v in tokens.iteritems())
     syllables = get_syllable_info(tokens)
-    print syllables[0]
     seq = []
     rand_init_state = get_random(pi[0])
     state = rand_init_state
     # states by observations now
     Ot = np.transpose(O)
     num_syllables = 0
-    # next state essentially chosen randomly, need to find a way 
-    # to take probability into account
     while num_syllables < total_len:
         if num_syllables == total_len - 2:
             indices = [tokens[x] for x in syllables[2]]
             row = [Ot[state][i] for i in indices]
             rand_idx = get_random(row)
             rand_obs = indices[rand_idx]
-            print '2'
             num_syllables += 2
         elif num_syllables == total_len - 1:
             indices = [tokens[x] for x in syllables[1]]
             row = [Ot[state][i] for i in indices]
             rand_idx = get_random(row)
             rand_obs = indices[rand_idx]
-            print '1'
             num_syllables += 1
-        else:            
+        else:           
             while True:
                 rand_obs = get_random(Ot[state])
                 size = len(h_en.syllables(unicode(res[rand_obs], "utf-8")))
                 # Account for 1 syllable words that are counted as 0 syllable
-                if size == 0 and res[rand_obs] not in punc_list:
+                #if size == 0 and res[rand_obs] not in punc_list:
+                #    size += 1
+                ## Punctuation can't come first in line or after another punctuation
+                #if num_syllables + size < 10 and (size != 0 or num_syllables != 0):
+                #    if size != 0 or seq[-1] not in punc_list:
+                #        num_syllables += size
+                #        break
+                if size == 0:
                     size += 1
-                print size
                 if num_syllables + size < 10:
                     num_syllables += size
                     break
         #rand_obs = 0
         #seq.append(res[rand_obs])
-        print res[rand_obs]
         seq.append(res[rand_obs])
         next_state = get_random(A[state])
         #next_state = 0
@@ -322,6 +322,7 @@ pi[0] = pi[0] / np.sum(pi[0])
 poem = []
 for i in range(num_states):
     A[i] = A [i]/ np.sum(A, axis = 1)[i]
+
 for i in range(14):
     seq = neseq(num_states, num_tokens,pi, A, O,word_num_dict, 10)
     poem.append(seq)
