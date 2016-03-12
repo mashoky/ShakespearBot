@@ -1,6 +1,7 @@
 import numpy as np
 import finding_sequence
 from numpy import random
+import nltk
 
 #file = open('C:/Users/Jagriti/Documents/CS155/project2data/shakespeare.txt', 'r')
 
@@ -9,6 +10,7 @@ file = open('C:\Users\manasa\Documents\Caltech\CS 155\ShakespeareProject\smallsh
 int_list = []
 punc_list = ['.', ',', ';', ':']
 punc_string = '.,;:'
+english_vocab = set(w.lower() for w in nltk.corpus.words.words())
 
 # list of sequences, where each word is a number corrresponding to balue in dictionary
 sequence_list = []
@@ -58,9 +60,15 @@ for line in file:
                             index += 1
             # otherwise, just add the word
             elif contains_punc == False:
-                sequence_char.append(i)
-                if i not in word_num_dict.keys():
-                    word_num_dict[i] = index
+                parts = i.split("'")
+                processed = ''
+                if parts[0] in english_vocab:
+                    processed = parts[0]
+                else:
+                    processed = i   
+                sequence_char.append(processed)
+                if processed not in word_num_dict.keys():
+                    word_num_dict[processed] = index
                     index += 1
         for i in sequence_char:
             val = word_num_dict.get(i)
@@ -88,7 +96,7 @@ def baum_welch(num_states, sequences, num_tokens, pi):
     for j in range(num_states):
         O [:,j] = O[:,j] / np.sum(O, axis = 0)[j]
   
-    num_iter = 100
+    num_iter = 10
     prev_a_norm = 100000
     prev_o_norm = 100000
     print 'out'
@@ -183,7 +191,8 @@ def baum_welch(num_states, sequences, num_tokens, pi):
                 for j in range(num_states):
                     num = sum(e_vec[t][i][j] for t in range(len(seq) - 1))
                     denominator = sum(gammas[t][i] for t in range(len(seq) - 1))
-                    temp_a[i][j] += num / float(denominator)
+                    if denominator != 0:
+                        temp_a[i][j] += num / float(denominator)
 
             for i in range(num_states):
                 #print 'NEW Round'
@@ -200,7 +209,9 @@ def baum_welch(num_states, sequences, num_tokens, pi):
                         #print i_sum
                         denominator += gammas[t][i]
                         #print i_sum
-                    val = i_sum / float(denominator)
+                    val = 0
+                    if denominator != 0:
+                        val += i_sum / float(denominator)
                     temp_o[v_k][i] += val
                     #if val != 0:
                         #print val
@@ -261,6 +272,10 @@ def get_line_from_seq(seq, tokens):
 
 pi = np.random.uniform(0, 1, (1, num_states))
 (A, O) = baum_welch(num_states, sequences,num_tokens, pi)
+print A
+print O
+print np.sum(A, axis=1)
+print np.sum(O, axis=0)
 poem = []
 for i in range(14):
     seq = neseq(num_states, num_tokens,pi, A, O,5)
