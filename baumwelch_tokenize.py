@@ -79,13 +79,13 @@ num_tokens = len(word_num_dict.keys())
 
 
 def baum_welch(num_states, sequences, num_tokens, pi):
-    A = np.ones((num_states, num_states)) / num_states
-    O = np.ones((num_tokens, num_states)) / num_states
-    
-    #order = np.random.permutation(len(sequences))
-    #idx = 0
+    #A = np.ones((num_states, num_states)) / num_states
+    #O = np.ones((num_tokens, num_states)) / num_states
+    A = np.random.uniform(0.0,1.0,(num_states, num_states))
+    O = np.random.uniform(0.0,1.0,(num_tokens, num_states))    
+
    
-    num_iter = 100
+    num_iter = 1
     prev_a_norm = 100000
     prev_o_norm = 100000
     print 'out'
@@ -167,6 +167,7 @@ def baum_welch(num_states, sequences, num_tokens, pi):
                         num = alphas[t][i] * A[i][j] * betas[t + 1][j]  * O[seq[t + 1]][j]
                         #sum_val = sum(alphas[num_states - 1][k] for k in range(num_states))
                         sum_val = sum(alphas[len(seq) - 1][k] for k in range(num_states))
+                        
                         e_mat[i][j] = num / float(sum_val)
                 e_vec.append(e_mat)  
                 
@@ -251,10 +252,15 @@ def get_line_from_seq(seq, tokens):
     res = dict((v,k) for k,v in tokens.iteritems())
     for w in seq:
         line.append(res[w])
-    return line
+    line[0] = line[0].title()
+    return " ".join(line)
+    
 
 pi = np.random.uniform(0, 1, (1, num_states))
 (A, O) = baum_welch(num_states, sequences,num_tokens, pi)
-seq = neseq(num_states, num_tokens,pi, A, O,5)
-print seq
-print get_line_from_seq(seq, word_num_dict)
+poem = []
+for i in range(14):
+    seq = neseq(num_states, num_tokens,pi, A, O,5)
+    line = get_line_from_seq(seq, word_num_dict)
+    poem.append(line)
+print poem
