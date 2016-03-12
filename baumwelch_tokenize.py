@@ -82,10 +82,13 @@ def baum_welch(num_states, sequences, num_tokens, pi):
     #A = np.ones((num_states, num_states)) / num_states
     #O = np.ones((num_tokens, num_states)) / num_states
     A = np.random.uniform(0.0,1.0,(num_states, num_states))
-    O = np.random.uniform(0.0,1.0,(num_tokens, num_states))    
-
-   
-    num_iter = 1
+    O = np.random.uniform(0.0,1.0,(num_tokens, num_states)) 
+    for i in range(num_states):
+        A[i] = A [i]/ np.sum(A, axis = 1)[i]
+    for j in range(num_states):
+        O [:,j] = O[:,j] / np.sum(O, axis = 0)[j]
+  
+    num_iter = 100
     prev_a_norm = 100000
     prev_o_norm = 100000
     print 'out'
@@ -263,4 +266,4 @@ for i in range(14):
     seq = neseq(num_states, num_tokens,pi, A, O,5)
     line = get_line_from_seq(seq, word_num_dict)
     poem.append(line)
-print poem
+print "\n".join(poem)
