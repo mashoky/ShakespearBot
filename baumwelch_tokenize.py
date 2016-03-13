@@ -9,7 +9,7 @@ h_en = Hyphenator('en_US')
 
 #file = open('C:/Users/Jagriti/Documents/CS155/project2data/shakesare.txt', 'r')
 
-file = open('C:\Users\manasa\Documents\Caltech\CS 155\ShakespeareProject\smallshakespear.txt')
+file = open('C:\Users\manasa\Documents\Caltech\CS 155\ShakespeareProject\shakespeare.txt')
 
 int_list = []
 punc_list = ['.', ',', ';', ':','?','(',')']
@@ -89,7 +89,7 @@ vals = word_num_dict.values()
 vals.sort()
 #print word_num_dict['.']
 
-num_states = 50
+num_states = 40
 sequences = sequence_list
 num_tokens = len(word_num_dict.keys())
 
@@ -111,15 +111,9 @@ def baum_welch(num_states, sequences, num_tokens, pi):
     for it in range(num_iter):
         print 'Iteration'
         print it
-        #if idx == len(sequences):
-        #    order = np.random.permutation(len(sequences))
-        #    idx = 0
         temp_a = np.zeros((num_states, num_states))
         temp_o = np.zeros((num_tokens, num_states))
-        #seq_num = 0
         for seq in sequences:
-            #print seq_num
-            #seq_num += 1
             # Forward procedure
             alphas = []
             prev_alpha = []
@@ -147,7 +141,6 @@ def baum_welch(num_states, sequences, num_tokens, pi):
             for j,w in enumerate(reversed(seq)):
                 curr = []
                 for i in range(num_states):
-                    #if j == len(seq) - 1:
                     if j == 0:
                         curr.append(1)
                     else:
@@ -172,8 +165,6 @@ def baum_welch(num_states, sequences, num_tokens, pi):
                     num = alphas[t][i] * betas[t][i]       
                     sum_val = sum(alphas[t][j] * betas[t][j] for j in range(num_states))
                     curr.append(num / float(sum_val))
-                #print 'gamma_sum'
-                #print sum(curr)
                 gammas.append(curr)
                 
             e_vec = []
@@ -210,20 +201,12 @@ def baum_welch(num_states, sequences, num_tokens, pi):
                     denominator = 0
                     for t in range(len(seq)):
                         if seq[t] == v_k:
-                            #print "hi"
-                            #print gammas[t][i]
                             i_sum += gammas[t][i]
-                            #print i_sum
-                        #print i_sum
                         denominator += gammas[t][i]
-                        #print i_sum
                     val = 0
                     if denominator != 0:
                         val += i_sum / float(denominator)
-                    temp_o[v_k][i] += val
-                    #if val != 0:
-                        #print val
-                # print val   
+                    temp_o[v_k][i] += val  
         for i in range(num_states):
             for j in range(num_states):
                 A[i][j] = (temp_a[i][j] / float(len(sequences)))
@@ -236,10 +219,6 @@ def baum_welch(num_states, sequences, num_tokens, pi):
             break
         prev_a_norm = a_norm
         prev_o_norm = o_norm
-    #print A   
-    #print O
-    #print np.sum(A, axis=0)
-    #print np.sum(O, axis=0)
     return (A, O)
     
 def get_random(row):
@@ -289,23 +268,13 @@ def neseq(num_states, num_tokens, pi, A, O, tokens, total_len):
                 rand_obs = get_random(Ot[state])
                 size = len(h_en.syllables(unicode(res[rand_obs], "utf-8")))
                 # Account for 1 syllable words that are counted as 0 syllable
-                #if size == 0 and res[rand_obs] not in punc_list:
-                #    size += 1
-                ## Punctuation can't come first in line or after another punctuation
-                #if num_syllables + size < 10 and (size != 0 or num_syllables != 0):
-                #    if size != 0 or seq[-1] not in punc_list:
-                #        num_syllables += size
-                #        break
                 if size == 0:
                     size += 1
                 if num_syllables + size < 10:
                     num_syllables += size
                     break
-        #rand_obs = 0
-        #seq.append(res[rand_obs])
         seq.append(res[rand_obs])
         next_state = get_random(A[state])
-        #next_state = 0
         state = next_state
     seq[0] = seq[0].title()
     return " ".join(seq)
