@@ -9,7 +9,7 @@ h_en = Hyphenator('en_US')
 
 #file = open('C:/Users/Jagriti/Documents/CS155/project2data/shakesare.txt', 'r')
 
-file = open('C:\Users\manasa\Documents\Caltech\CS 155\ShakespeareProject\smallshakespear.txt')
+file = open(r'C:\Users\manasa\Documents\Caltech\CS 155\ShakespeareProject\shakespeare.txt')
 
 int_list = []
 punc_list = ['.', ',', ';', ':','?','(',')']
@@ -18,7 +18,7 @@ punc_string = '.,;:?()'
 #punc_string = ''
 english_vocab = set(w.lower() for w in nltk.corpus.words.words())
 
-# list of sequences, where each word is a number corrresponding to balue in dictionary
+# list of sequences, where each word is a number corrresponding to value in dictionary
 sequence_list = []
 
 for i in range(1, 155):
@@ -27,6 +27,7 @@ for i in range(1, 155):
 
 
 word_num_dict = {}
+counts = {}
 index = 0
 for line in file:
     sequence_char = []
@@ -64,6 +65,10 @@ for line in file:
                         if new_word not in word_num_dict.keys():
                             word_num_dict[new_word] = index
                             index += 1
+                        if new_word not in counts.keys():
+                            counts[new_word] = 1
+                        else:
+                            counts[new_word] += 1
             # otherwise, just add the word
             elif contains_punc == False:
                 # If word has apostrophe, and the first part of the word is a 
@@ -78,6 +83,10 @@ for line in file:
                 if processed not in word_num_dict.keys():
                     word_num_dict[processed] = index
                     index += 1
+                if processed not in counts.keys():
+                    counts[processed] = 1
+                else:
+                    counts[processed] += 1
         for i in sequence_char:
             val = word_num_dict.get(i)
             sequence_num.append(val)
@@ -215,7 +224,7 @@ def baum_welch(num_states, sequences, num_tokens, pi):
                 O[v_k][i] = temp_o[v_k][i] / float(len(sequences))
         a_norm = np.linalg.norm(A)
         o_norm = np.linalg.norm(O)
-        if abs(a_norm - prev_a_norm) < 0.01 and abs(o_norm - prev_o_norm) < 0.01:
+        if abs(a_norm - prev_a_norm) < 0.001 and abs(o_norm - prev_o_norm) < 0.001:
             break
         prev_a_norm = a_norm
         prev_o_norm = o_norm
@@ -228,31 +237,84 @@ pi[0] = pi[0] / np.sum(pi[0])
 
 for i in range(num_states):
     A[i] = A [i]/ np.sum(A, axis = 1)[i]
+    
+print A
+#word_lst = dict((v,k) for k,v in word_num_dict.iteritems())
+#
+#for word,idx in word_num_dict.iteritems():
+#    freq = counts[word]
+#    O[idx] = O[idx] / freq
+#    
+#
+#Ot = np.transpose(O)
+#for s in range(num_states):
+#    s = np.argsort(Ot[s])
+#    top_words = s[:20]
+#    common = []
+#    for w in top_words:
+#        common.append(word_lst[w])
+#    print common
+#
+#syllables = {}
+#for word in word_num_dict.keys():
+#    s = len(h_en.syllables(unicode(word)))
+#    if s == 0:
+#        s = 1
+#    syllables[word] = s
+#        
+#for s in range(num_states):
+#    prob = []
+#    one_count = 0
+#    two_count = 0
+#    three_count = 0
+#    four_count = 0
+#    more_count = 0
+#    for word in syllables.keys():
+#        w = word_num_dict[word]
+#        syll = syllables[word]
+#        if syll == 1:
+#            one_count += O[w][s]
+#        elif syll == 2:
+#            two_count += O[w][s]
+#        elif syll == 3:
+#            three_count += O[w][s]
+#        elif syll == 4:
+#            four_count += O[w][s]
+#        else:
+#            more_count += O[w][s]            
+#    prob.append(one_count)
+#    prob.append(two_count)
+#    prob.append(three_count)
+#    prob.append(four_count)
+#    prob.append(more_count)
+#    print prob
+    
+#tags = nltk.pos_tag(word_num_dict.keys())
 
-word_lst = dict((v,k) for k,v in word_num_dict.iteritems())
-
-
-print 'here'
-for s in range(num_states):
-    prob = []
-    noun_count = 0
-    verb_count = 0
-    adj_count = 0
-    prep_count = 0
-    for w in range(num_tokens):
-        word = word_lst[w]
-        tag = nltk.pos_tag([word])[0][1]
-        if tag == 'NN':
-            noun_count += O[w][s]
-        elif tag == 'VBD':
-            verb_count += O[w][s]
-        elif tag == 'IN':
-            prep_count += O[w][s]
-        elif tag == 'JJ' or tag == 'JJR' or tag == 'JJS':
-            adj_count += O[w][s]
-    prob.append(noun_count)
-    prob.append(verb_count)
-    prob.append(adj_count)
-    prob.append(prep_count)
-    print prob
-        
+#for s in range(num_states):
+#    prob = []
+#    noun_count = 0
+#    verb_count = 0
+#    adj_count = 0
+#    prep_count = 0
+#    pro_count = 0
+#    for tup in tags:
+#        word = tup[0]
+#        w = word_num_dict[word]
+#        tag = tup[1]
+#        if tag == 'NN':
+#            noun_count += O[w][s]
+#        elif tag == 'VBD':
+#            verb_count += O[w][s]
+#        elif tag == 'IN':
+#            prep_count += O[w][s]
+#        elif tag == 'JJ' or tag == 'JJR' or tag == 'JJS':
+#            adj_count += O[w][s]
+#        elif tag == 'PRP' or tag == 'PRP$':
+#            pro_count += O[w][s]            
+#    prob.append(noun_count)
+#    prob.append(verb_count)
+#    prob.append(adj_count)
+#    prob.append(prep_count)
+#    prob.append(pro_count)
+#    print prob

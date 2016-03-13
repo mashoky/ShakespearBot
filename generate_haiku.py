@@ -92,6 +92,134 @@ vals.sort()
 num_states = 40
 sequences = sequence_list
 num_tokens = len(word_num_dict.keys())
+
+
+def baum_welch(num_states, sequences, num_tokens, pi):
+    #A = np.ones((num_states, num_states)) / num_states
+    #O = np.ones((num_tokens, num_states)) / num_states
+    A = np.random.uniform(0.0,1.0,(num_states, num_states))
+    O = np.random.uniform(0.0,1.0,(num_tokens, num_states)) 
+    for i in range(num_states):
+        A[i] = A [i]/ np.sum(A, axis = 1)[i]
+    for j in range(num_states):
+        O [:,j] = O[:,j] / np.sum(O, axis = 0)[j]
+  
+    num_iter = 100
+    prev_a_norm = 100000
+    prev_o_norm = 100000
+    print 'out'
+    for it in range(num_iter):
+        print 'Iteration'
+        print it
+        temp_a = np.zeros((num_states, num_states))
+        temp_o = np.zeros((num_tokens, num_states))
+        for seq in sequences:
+            # Forward procedure
+            alphas = []
+            prev_alpha = []
+            # Calculate probability of seeing a particular emission and being
+            # in state i at position j
+            for j,w in enumerate(seq):
+                curr = []
+                for i in range(num_states):
+                    if j == 0:
+                        val = pi[0][i]
+                    else:
+                        val = 0
+                        for k in range(num_states):
+                            val += prev_alpha[k] * A[k][i]
+                    curr.append(val * O[w][i])
+                curr = [float(i)/sum(curr) for i in curr]
+                alphas.append(curr)
+                prev_alpha = curr
+            
+            # Backward Procedure
+            # Calculate probability of ending the partial sequence at a particular
+            # observation, given the starting state i at position j
+            betas = []
+            nxt_beta = []
+            for j,w in enumerate(reversed(seq)):
+                curr = []
+                for i in range(num_states):
+                    if j == 0:
+                        curr.append(1)
+                    else:
+                        val = 0
+                        for k in range(num_states):
+                            #val += nxt_beta[k] * A[i][k] * O[w][k]
+                            val += nxt_beta[0] * A[i][k] * O[w][k]
+                        curr.append(val)
+
+
+                curr = [float(i)/sum(curr) for i in curr]
+                betas.insert(0, curr)
+                nxt_beta = curr
+        
+            gammas = []  
+            # Calculate temporary variables
+            # Probability of being in state i at position t given the observed
+            # sequence
+            for t, word in enumerate(seq):
+                curr = []
+                for i in range(num_states): 
+                    num = alphas[t][i] * betas[t][i]       
+                    sum_val = sum(alphas[t][j] * betas[t][j] for j in range(num_states))
+                    curr.append(num / float(sum_val))
+                gammas.append(curr)
+                
+            e_vec = []
+            # Calculate probability of being in state i and state j at positions
+            # t and t + 1 given the observed sequence
+            for t, word in enumerate(seq[:-1]):
+                e_mat = np.zeros((num_states,num_states))
+                for i in range(num_states): 
+                    for j in range(num_states):
+                        num = alphas[t][i] * A[i][j] * betas[t + 1][j]  * O[seq[t + 1]][j]
+                        #sum_val = sum(alphas[num_states - 1][k] for k in range(num_states))
+                        sum_val = sum(alphas[len(seq) - 1][k] for k in range(num_states))
+                        
+                        e_mat[i][j] = num / float(sum_val)
+                e_vec.append(e_mat)  
+                
+            # Update parameters
+            for i in range(num_states):
+                pi[0][i] = gammas[1][i]
+                
+            # Update Transition Matrix
+            for i in range(num_states):
+                for j in range(num_states):
+                    num = sum(e_vec[t][i][j] for t in range(len(seq) - 1))
+                    denominator = sum(gammas[t][i] for t in range(len(seq) - 1))
+                    if denominator != 0:
+                        temp_a[i][j] += num / float(denominator)
+
+            for i in range(num_states):
+                #print 'NEW Round'
+                #print i
+                for v_k in range(num_tokens):
+                    i_sum = 0
+                    denominator = 0
+                    for t in range(len(seq)):
+                        if seq[t] == v_k:
+                            i_sum += gammas[t][i]
+                        denominator += gammas[t][i]
+                    val = 0
+                    if denominator != 0:
+                        val += i_sum / float(denominator)
+                    temp_o[v_k][i] += val  
+        for i in range(num_states):
+            for j in range(num_states):
+                A[i][j] = (temp_a[i][j] / float(len(sequences)))
+        for v_k in range(num_tokens):
+            for i in range(num_states):
+                O[v_k][i] = temp_o[v_k][i] / float(len(sequences))
+        a_norm = np.linalg.norm(A)
+        o_norm = np.linalg.norm(O)
+        if abs(a_norm - prev_a_norm) < 0.01 and abs(o_norm - prev_o_norm) < 0.01:
+            break
+        prev_a_norm = a_norm
+        prev_o_norm = o_norm
+    return (A, O)
     
 def get_random(row):
     total = np.sum(row)
@@ -123,7 +251,13 @@ def neseq(num_states, num_tokens, pi, A, O, tokens, total_len):
     Ot = np.transpose(O)
     num_syllables = 0
     while num_syllables < total_len:
-        if num_syllables == total_len - 1:
+        if num_syllables == total_len - 2:
+            indices = [tokens[x] for x in syllables[2]]
+            row = [Ot[state][i] for i in indices]
+            rand_idx = get_random(row)
+            rand_obs = indices[rand_idx]
+            num_syllables += 2
+        elif num_syllables == total_len - 1:
             indices = [tokens[x] for x in syllables[1]]
             row = [Ot[state][i] for i in indices]
             rand_idx = get_random(row)
@@ -149,19 +283,19 @@ def neseq(num_states, num_tokens, pi, A, O, tokens, total_len):
 pi = np.random.uniform(0, 1, (1, num_states))
 pi[0] = pi[0] / np.sum(pi[0])
     
-#(A, O) = baum_welch(num_states, sequences,num_tokens, pi)
+(A, O) = baum_welch(num_states, sequences,num_tokens, pi)
 #print A
 #print O
 #print np.sum(A, axis=1)
 #print np.sum(O, axis=0)
-#poem = []
-#for i in range(num_states):
-#    A[i] = A [i]/ np.sum(A, axis = 1)[i]
-#
-#l1 = neseq(num_states, num_tokens,pi, A, O,word_num_dict, 5)
-#l2 = neseq(num_states, num_tokens, pi, A, O, word_num_dict, 7)
-#l3 = neseq(num_states, num_tokens,pi, A, O,word_num_dict, 5)
-#poem.append(l1)
-#poem.append(l2)
-#poem.append(l3)
-#print "\n".join(poem)
+poem = []
+for i in range(num_states):
+    A[i] = A [i]/ np.sum(A, axis = 1)[i]
+
+l1 = neseq(num_states, num_tokens,pi, A, O,word_num_dict, 5)
+l2 = neseq(num_states, num_tokens, pi, A, O, word_num_dict, 7)
+l3 = neseq(num_states, num_tokens,pi, A, O,word_num_dict, 5)
+poem.append(l1)
+poem.append(l2)
+poem.append(l3)
+print "\n".join(poem)
