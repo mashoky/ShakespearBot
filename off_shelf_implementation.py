@@ -114,7 +114,7 @@ hmm_trainer = nltk.tag.hmm.HiddenMarkovModelTrainer(states=states, symbols=token
 hmm = hmm_trainer.train_unsupervised(s, max_iterations=50)
 num_word_dict = dict((v, k) for k, v in word_num_dict.iteritems())
 for i in range(14):
-    s = hmm.random_sample(random.Random(), 7)
+    s = hmm.random_sample(random.Random(), 6)
     line = []
     for j in range(len(s)):
         word = num_word_dict[s[j][0]]
