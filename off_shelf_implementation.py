@@ -7,9 +7,9 @@ from hyphen.dictools import *
 import collections
 h_en = Hyphenator('en_US')
 
-file = open('C:/Users/Jagriti/Documents/CS155/project2data/shakespeare.txt', 'r')
+#file = open('C:/Users/Jagriti/Documents/CS155/project2data/shakespeare.txt', 'r')
 
-#file = open('C:\Users\manasa\Documents\Caltech\CS 155\ShakespeareProject\smallshakespear.txt')
+file = open('C:\Users\manasa\Documents\Caltech\CS 155\ShakespeareProject\smallshakespear.txt')
 
 int_list = []
 punc_list = ['.', ',', ';', ':','?','(',')']
@@ -111,4 +111,6 @@ tokens = range(len(word_num_dict))
 hmm_trainer = nltk.tag.hmm.HiddenMarkovModelTrainer(states=states, symbols=tokens)
 
 hmm = hmm_trainer.train_unsupervised(s, max_iterations=2)
-print hmm._outputs[1]._samples
+
+print hmm_trainer.priors()
+#print hmm._outputs[1]._samples
