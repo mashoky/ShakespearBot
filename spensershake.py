@@ -9,7 +9,7 @@ h_en = Hyphenator('en_US')
 
 #file = open('C:/Users/Jagriti/Documents/CS155/project2data/shakesare.txt', 'r')
 
-file = open('C:\Users\manasa\Documents\Caltech\CS 155\ShakespeareProject\smallshakespear.txt')
+file = open('C:\Users\manasa\Documents\Caltech\CS 155\ShakespeareProject\spensershake.txt')
 
 int_list = []
 punc_list = ['.', ',', ';', ':','?','(',')']
@@ -25,7 +25,15 @@ for i in range(1, 155):
     num = str(i)
     int_list.append(num)
 
-
+def isRomanNumeral(numeral):
+    """Controls that the userinput only contains valid roman numerals"""
+    numeral = numeral.upper()
+    validRomanNumerals = ["M", "D", "C", "L", "X", "V", "I", "(", ")"]
+    for letters in numeral:
+        if letters not in validRomanNumerals:
+            return False
+    return True
+    
 word_num_dict = {}
 index = 0
 for line in file:
@@ -37,7 +45,7 @@ for line in file:
             contains_num = True
     # if the line doesn't contain just the number of the sonnet and it isn't empty, 
     # split based on spaces
-    if contains_num == False and line != "\n":
+    if contains_num == False and line != "\n" and not isRomanNumeral(line.strip()):
         words = line.strip()
         words =words.split(' ')
         
@@ -89,7 +97,7 @@ vals = word_num_dict.values()
 vals.sort()
 #print word_num_dict['.']
 
-num_states = 30
+num_states = 40
 sequences = sequence_list
 num_tokens = len(word_num_dict.keys())
 
@@ -292,10 +300,7 @@ poem = []
 for i in range(num_states):
     A[i] = A [i]/ np.sum(A, axis = 1)[i]
 
-l1 = neseq(num_states, num_tokens,pi, A, O,word_num_dict, 5)
-l2 = neseq(num_states, num_tokens, pi, A, O, word_num_dict, 7)
-l3 = neseq(num_states, num_tokens,pi, A, O,word_num_dict, 5)
-poem.append(l1)
-poem.append(l2)
-poem.append(l3)
+for i in range(14):
+    seq = neseq(num_states, num_tokens,pi, A, O,word_num_dict, 10)
+    poem.append(seq)
 print "\n".join(poem)
