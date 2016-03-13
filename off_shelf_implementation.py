@@ -1,5 +1,6 @@
 import numpy as np
 import nltk
+import random
 
 from hyphen import Hyphenator, dict_info
 
@@ -7,9 +8,9 @@ from hyphen.dictools import *
 import collections
 h_en = Hyphenator('en_US')
 
-#file = open('C:/Users/Jagriti/Documents/CS155/project2data/shakespeare.txt', 'r')
+file = open('C:/Users/Jagriti/Documents/CS155/project2data/shakespeare.txt', 'r')
 
-file = open('C:\Users\manasa\Documents\Caltech\CS 155\ShakespeareProject\smallshakespear.txt')
+#file = open('C:\Users\manasa\Documents\Caltech\CS 155\ShakespeareProject\smallshakespear.txt')
 
 int_list = []
 punc_list = ['.', ',', ';', ':','?','(',')']
@@ -106,11 +107,17 @@ print np.array(s)
 #print sequences
 seq = np.array(sequences)
 #s = nltk.list()
-states = range(10)
+states = range(20)
 tokens = range(len(word_num_dict))
 hmm_trainer = nltk.tag.hmm.HiddenMarkovModelTrainer(states=states, symbols=tokens)
 
-hmm = hmm_trainer.train_unsupervised(s, max_iterations=2)
-
-print hmm_trainer.priors()
-#print hmm._outputs[1]._samples
+hmm = hmm_trainer.train_unsupervised(s, max_iterations=50)
+num_word_dict = dict((v, k) for k, v in word_num_dict.iteritems())
+for i in range(14):
+    s = hmm.random_sample(random.Random(), 7)
+    line = []
+    for j in range(len(s)):
+        word = num_word_dict[s[j][0]]
+        line.append(word)
+    b = ' '.join(line)
+    print b

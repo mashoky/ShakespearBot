@@ -7,9 +7,9 @@ from hyphen.dictools import *
 import collections
 h_en = Hyphenator('en_US')
 
-#file = open('C:/Users/Jagriti/Documents/CS155/project2data/shakesare.txt', 'r')
+file = open('C:/Users/Jagriti/Documents/CS155/project2data/shakespeare.txt', 'r')
 
-file = open('C:\Users\manasa\Documents\Caltech\CS 155\ShakespeareProject\smallshakespear.txt')
+#file = open('C:\Users\manasa\Documents\Caltech\CS 155\ShakespeareProject\smallshakespear.txt')
 
 int_list = []
 punc_list = ['.', ',', ';', ':','?','(',')']
